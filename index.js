@@ -4,7 +4,6 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-
 const port = process.env.PORT || 5000;
 const app = express();
 
@@ -41,32 +40,78 @@ const client = new MongoClient(uri, {
 
 const run = async () => {
   try {
+    //collections
     const ProductCategory = client.db("Assignment-12").collection("Categories");
     const UsersCollection = client.db("Assignment-12").collection("Users");
-   app.get('/categories',async(req,res)=>{
-    const result = await ProductCategory.find({}).toArray()
-    res.send(result)
-   })
-   app.post("/users", async (req, res) => {
-    const user = req.body;
-    const result = await UsersCollection.insertOne(user);
-    res.send(result);
-  });
-   app.get("/jwt", async (req, res) => {
-    const email = req.query.email;
-    const query = {
-      email: email,
-    };
-    const user = await UsersCollection.find(query);
-    if (user) {
-      const token = jwt.sign({ email }, process.env.ACCESS_SECRET_TOKEN, {
-        expiresIn: "7d",
-      });
-      return res.send({ accessToken: token });
-    }
-    res.status(401).send({ accessToken: "" });
-  });
-  
+    const ProductsCollection = client
+      .db("Assignment-12")
+      .collection("Products");
+    //category
+    app.get("/categories", async (req, res) => {
+      const result = await ProductCategory.find({}).toArray();
+      res.send(result);
+    });
+    //users
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const result = await UsersCollection.insertOne(user);
+      res.send(result);
+    });
+    app.get('/usersSeller/:role',async(req,res)=>{
+      const role = req.params.role
+      const query = {
+        role : role
+      }
+      const result = await UsersCollection.find(query).toArray();
+      res.send(result);
+    })
+    app.get('/usersBuyer/:role',async(req,res)=>{
+      const role = req.params.role
+      const query = {
+        role : role
+      }
+      const result = await UsersCollection.find(query).toArray();
+      res.send(result);
+    })
+    app.delete('/users/:id',async(req,res)=>{
+      const id = req.params.id
+      const query = {_id:ObjectId(id)}
+      const result = UsersCollection.deleteOne(query)
+      res.send(result); 
+    })
+    //Products
+    app.post("/products", async (req, res) => {
+      const Products = req.body;
+      const result = await ProductsCollection.insertOne(Products);
+      res.send(result);
+    });
+    app.get("/products/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = {email : email}
+      const result = await ProductsCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/categoryProducts/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = {categoryId : id}
+      const result = await ProductsCollection.find(query).toArray();
+      res.send(result);
+    });
+    //jwt
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+      const query = {
+        email: email,
+      };
+      const user = await UsersCollection.find(query);
+      if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_SECRET_TOKEN, {
+          expiresIn: "7d",
+        });
+        return res.send({ accessToken: token });
+      }
+      res.status(401).send({ accessToken: "" });
+    });
    
   } finally {
   }
