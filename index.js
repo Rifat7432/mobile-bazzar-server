@@ -65,6 +65,18 @@ const run = async () => {
       const result = await UsersCollection.find(query).toArray();
       res.send(result);
     })
+    app.get('/seller',async(req,res)=>{
+      const email = req.query.email
+      const role = req.query.role
+      
+      const query = {
+        email:email,
+        role : role
+      }
+      const result = await UsersCollection.findOne(query);
+      console.log(email,role,result)
+      res.send(result);
+    })
     app.get('/usersBuyer/:role',async(req,res)=>{
       const role = req.params.role
       const query = {
@@ -76,7 +88,7 @@ const run = async () => {
     app.delete('/users/:id',async(req,res)=>{
       const id = req.params.id
       const query = {_id:ObjectId(id)}
-      const result = UsersCollection.deleteOne(query)
+      const result = await UsersCollection.deleteOne(query)
       res.send(result); 
     })
     //Products
@@ -97,6 +109,13 @@ const run = async () => {
       const result = await ProductsCollection.find(query).toArray();
       res.send(result);
     });
+    app.delete('/product/:id',async(req,res)=>{
+      const id = req.params.id
+      console.log(id)
+      const query = {_id:ObjectId(id)}
+      const result = await ProductsCollection.deleteOne(query)
+      res.send(result); 
+    })
     //jwt
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
@@ -112,7 +131,7 @@ const run = async () => {
       }
       res.status(401).send({ accessToken: "" });
     });
-   
+
   } finally {
   }
 };
