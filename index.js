@@ -163,6 +163,23 @@ const run = async () => {
       const result = await ProductsCollection.insertOne(Products);
       res.send(result);
     });
+    app.put("/reportProduct/:id", async (req, res) => {
+      const id = req.params.id;
+      const report = req.body;
+      const filter = { _id: ObjectId(id) };
+      const option = { upsert: true };
+      const updateProductDoc = {
+        $set: {
+          report:report.reported 
+        },
+      };
+      const updateProduct = await ProductsCollection.updateOne(
+        filter,
+        updateProductDoc,
+        option
+      );
+      res.send(updateProduct);
+    });
     app.get("/allProducts", async (req, res) => {
       const result = await ProductsCollection.find({}).toArray();
       res.send(result);
@@ -285,7 +302,7 @@ const run = async () => {
       const options = { upsert: true };
       const updateDoc = {
         $set: {
-          advertise: false,
+          report: false,
         },
       };
       const result = await ProductsCollection.updateMany(
