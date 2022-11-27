@@ -44,7 +44,9 @@ const run = async () => {
     //collections
     const ProductCategory = client.db("Assignment-12").collection("Categories");
     const UsersCollection = client.db("Assignment-12").collection("Users");
-    const ProductsCollection = client.db("Assignment-12").collection("Products");
+    const ProductsCollection = client
+      .db("Assignment-12")
+      .collection("Products");
     const OrdersCollection = client.db("Assignment-12").collection("Orders");
     const PaymentCollection = client.db("Assignment-12").collection("Payment");
     //category
@@ -77,6 +79,15 @@ const run = async () => {
       const result = await UsersCollection.findOne(query);
       res.send(result);
     });
+    app.get("/seller/:email", async (req, res) => {
+      const email = req.params.email;
+
+      const query = {
+        email: email,
+      };
+      const result = await UsersCollection.findOne(query);
+      res.send(result);
+    });
     app.get("/usersBuyer/:role", async (req, res) => {
       const role = req.params.role;
       const query = {
@@ -91,12 +102,45 @@ const run = async () => {
       const result = await UsersCollection.deleteOne(query);
       res.send(result);
     });
+    app.put('/users/:email', async (req, res) => {
+      const email = req.params.email;
+      console.log(email)
+      const verified = req.body
+      const filter = { email : email };
+      const updateDoc = {
+        $set: {
+          verified:verified.verified
+        },
+      };
+      const updateProductDoc = {
+        $set:{
+          sellerVerified:verified.verified
+        }
+      }
+      const update = await UsersCollection.updateOne(filter, updateDoc);
+      const updateProduct = await ProductsCollection.updateMany(filter, updateProductDoc);
+      console.log(update,updateProduct)
+      res.send(update)
+    })
     //Products
     app.post("/products", async (req, res) => {
       const Products = req.body;
       const result = await ProductsCollection.insertOne(Products);
       res.send(result);
     });
+    app.put('/product/:id', async (req, res) => {
+      const id = req.params.id;
+      const advertise = req.body
+      const filter = { _id :ObjectId(id) };
+      const option = {upsert:true}
+      const updateProductDoc = {
+        $set:{
+          advertise:advertise.advertise
+        }
+      }
+      const updateProduct = await ProductsCollection.updateMany(filter, updateProductDoc,option);
+      res.send(updateProduct)
+    })
     app.get("/products/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
@@ -105,71 +149,58 @@ const run = async () => {
     });
     app.get("/categoryProducts/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { categoryId: id };
+      const query = { categoryId: id, status: "available" };
       const result = await ProductsCollection.find(query).toArray();
       res.send(result);
     });
     app.delete("/product/:id", async (req, res) => {
       const id = req.params.id;
-     
+
       const query = { _id: ObjectId(id) };
       const result = await ProductsCollection.deleteOne(query);
       res.send(result);
     });
-    app.put('/product/:id',async(req,res)=>{
-      const id = req.params.id
-const status = req.body
-
-      const filter = {_id:ObjectId(id)};
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          status: status.status,
-        },
-      };
-      const result = await ProductsCollection.updateOne(
-        filter,
-        updateDoc,
-        options
-      );
-      res.send(result);
-    })
     //orders
-    app.get('/order/:email',async(req,res)=>{
+    app.get("/order/:email", async (req, res) => {
       const email = req.params.email;
       const query = { buyerEmail: email };
       const result = await OrdersCollection.find(query).toArray();
       res.send(result);
-    })
-    app.get('/orderPayment/:id',async(req,res)=>{
+    });
+    app.get("/orderPayment/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await OrdersCollection.findOne(query);
       res.send(result);
-    })
+    });
+    app.post("/order", async (req, res) => {
+      const booking = req.body;
+      const result = await OrdersCollection.insertOne(booking);
+      res.send(result);
+    });
     //Payment
-    app.post('/payment',async(req,res)=>{
-      const payment = req.body
-      const result = await PaymentCollection.insertOne(payment)
-      const id = payment.orderId
-      const filter = {_id:ObjectId(id)}
+    app.post("/payment", async (req, res) => {
+      const payment = req.body;
+      const result = await PaymentCollection.insertOne(payment);
+      const id = payment.orderId;
+      const filter = { _id: ObjectId(id) };
       const updateDoc = {
-        $set:{
-          paid:true,
-          transactionId:payment.transactionId
-        }
-      }
-      const update = await OrdersCollection.updateOne(filter,updateDoc)
-      const productId = payment.productId
-      const query = {_id:ObjectId(productId)}
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const update = await OrdersCollection.updateOne(filter, updateDoc);
+      const productId = payment.productId;
+      const query = { _id: ObjectId(productId) };
       const updateProduct = {
-        $set:{
-          status:'sold',
-        }
-      }
-      const Update = await OrdersCollection.updateOne(query,updateProduct)
-      res.send(result)
-    })
+        $set: {
+          status: "sold",
+        },
+      };
+      const Update = await OrdersCollection.updateOne(query, updateProduct);
+      res.send(result);
+    });
     //jwt
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
@@ -186,20 +217,18 @@ const status = req.body
       res.status(401).send({ accessToken: "" });
     });
     app.post("/create-payment-intent", async (req, res) => {
-      const order = req.body
-      const price = order.productPrice
-      const amount = price
+      const order = req.body;
+      const price = order.productPrice;
+      const amount = price;
       const paymentIntent = await stripe.paymentIntents.create({
-       amount:amount,
-       currency: "usd",
-       "payment_method_types":[
-         "card"
-       ]
-     });
-     res.send({
-       clientSecret: paymentIntent.client_secret,
-     });
-     })
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
     app.get("/status", async (req, res) => {
       const filter = {};
       const options = { upsert: true };
@@ -215,7 +244,6 @@ const status = req.body
       );
       res.send(result);
     });
-
   } finally {
   }
 };
