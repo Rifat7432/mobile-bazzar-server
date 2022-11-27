@@ -49,6 +49,7 @@ const run = async () => {
       .collection("Products");
     const OrdersCollection = client.db("Assignment-12").collection("Orders");
     const PaymentCollection = client.db("Assignment-12").collection("Payment");
+    const WishCollection = client.db("Assignment-12").collection("WishList");
     //category
     app.get("/categories", async (req, res) => {
       const result = await ProductCategory.find({}).toArray();
@@ -83,6 +84,18 @@ const run = async () => {
       const query = { email: email };
       const user = await UsersCollection.findOne(query);
       res.send({ isAdmin: user?.role === "Admin" });
+    });
+    app.get("/users/seller/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await UsersCollection.findOne(query);
+      res.send({ isSeller: user?.role === "Seller" });
+    });
+    app.get("/users/buyer/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await UsersCollection.findOne(query);
+      res.send({ isBuyer: user?.role === "Buyer" });
     });
     app.put("/users/admin/:id", verifyJWT,  async (req, res) => {
       const id = req.params.id;
@@ -179,6 +192,11 @@ const run = async () => {
         option
       );
       res.send(updateProduct);
+    });
+    app.get("/reportedProducts", async (req, res) => {
+      const query = {report : true}
+      const result = await ProductsCollection.find(query).toArray();
+      res.send(result);
     });
     app.get("/allProducts", async (req, res) => {
       const result = await ProductsCollection.find({}).toArray();
