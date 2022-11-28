@@ -308,22 +308,7 @@ const run = async () => {
         clientSecret: paymentIntent.client_secret,
       });
     });
-    app.get("/status", async (req, res) => {
-      const filter = { _id:ObjectId('637e901a291a873c081f9f62') 
-      };
-      const options = {upsert:true}
-      const updateDoc = {
-        $set: {
-          categoryLogo: 'https://i.ibb.co/wYZkjzN/download.jpg',
-        },
-      };
-      const result = await ProductCategory.updateOne(
-        filter,
-        updateDoc,
-        options
-      );
-      res.send(result);
-    });
+    
   } finally {
   }
 };
